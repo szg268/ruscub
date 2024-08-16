@@ -257,7 +257,7 @@ class zone{
     bool ismv(int d);
     void drawnw();
     void clearnw();
-    
+    bool premv(int dr);
 };
 zone::zone(){
     for(int i=1;i<20;i++)
@@ -311,21 +311,21 @@ bool zone::ismv(int d)
         if(ni-1<0)
         return 0;
         for(int j=0;j<4;j++)
-        if(mp[ni-1][nj+j]!=0&&nw.shape[4][j])
+        if(mp[ni-1][nj+j]!=0&&nw.shape[3][j])
         return 0;
         break;
     case 4:
         if(nj-1<0)
         return 0;
         for(int i=0;i<4;i++)
-        if(mp[ni+i][nj-1]!=0&&nw.shape[i][1])
+        if(mp[ni+i][nj-1]!=0&&nw.shape[i][0])
         return 0;
         break;
     case 5:
         if(nj+1>6)
         return 0;
         for(int i=0;i<4;i++)
-        if(mp[ni+i][nj+1]!=0&&nw.shape[i][4])
+        if(mp[ni+i][nj+1]!=0&&nw.shape[i][3])
         return 0;
         break;
     default:
@@ -334,46 +334,99 @@ bool zone::ismv(int d)
     return 1;
 }
 
+bool zone::premv(int dr)
+{
+    bool shp[4][4]={0};
+    for(int i=0;i<4;i++)
+    for(int j=0;j<4;j++)
+    shp[i][j]=nw.shape[i][j];
+    switch (dr)
+   { 
+    case 3:
+    for(int i=0;i<4;i++)
+    if(nw.shape[0][i]!=0)
+    return 0;
+    for(int i=0;i<4;i++)
+    nw.shape[3][i]=0;
+    for(int i=0;i<3;i++)
+    for(int j=0;j<4;j++)
+    nw.shape[i][j]=shp[i+1][j];
+    return 1;
+    break;
+    case 4:
+    for(int i=0;i<4;i++)
+    if(nw.shape[i][0]!=0)
+    return 0;
+    for(int i=0;i<4;i++)
+    nw.shape[i][3]=0;
+    for(int i=0;i<3;i++)
+    for(int j=0;j<4;j++)
+    nw.shape[j][i]=shp[j][i+1];
+    return 1;
+    break;
+    case 5:
+    for(int i=0;i<4;i++)
+    if(nw.shape[i][3]!=0)
+    return 0;
+    for(int i=0;i<4;i++)
+    nw.shape[i][0]=0;
+    for(int i=0;i<3;i++)
+    for(int j=0;j<4;j++)
+    nw.shape[j][i+1]=shp[j][i];
+    return 1;
+    break;
+    default:
+    break;
+   }
+   return 0;
+}
 void zone::move(int t)
 {
+clearnw();
  if(t==1)
- nw.turnl();
+ {nw.turnl();
+ if(!ismv(0))
+  nw.turnr();
+ }
  if(t==2)
  nw.turnr();
- if(t==3)
+ if(t==3&&(!premv(3)))
  {
+  
   if(ismv(3))
-  {
-    clearnw();
+  { 
+    
     ni--;
-    drawnw();
+   
   }
  }
- if(t==4)
+ if(t==4&&!premv(4))
  {
+    
     if(ismv(4))
   {
-    clearnw();
+    
     nj--;
-    drawnw();
+   
   }
 
  }
  if(t==5)
  {
-  if(ismv(4))
+  if(ismv(5)&&!premv(5))
   {
-    clearnw();
-    nj--;
-    drawnw();
+    nj++;
   }
  }
+ 
+ drawnw();
 }
 bool zone::nxt(){
     nw=nx;
     int shape=std::rand() % 7 + 1;
     int color=std::rand() % 4 + 1;
     nx.fresh(color,shape);
+    return ismv(0);
 }
 
 int zone::cnt(){
