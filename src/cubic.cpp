@@ -250,7 +250,7 @@ class zone{
     int ni,nj;
     cubic nw,nx;
     zone();
-    void move(int t);
+    bool move(int t);
     bool nxt();
     int cnt();
     bool full(int i);
@@ -291,47 +291,50 @@ bool zone::full(int i)
 {
 int cl=mp[i][0];
 for(int j=0;j<10;j++)
-if(mp[i][j]==0||mp[i][j]!=cl)
+if(mp[i][j]==0)
 return 0;
 return 1;
 }
 
 bool zone::ismv(int d)
 {   
-
+    bool t=1;
     switch (d)
     {
     case 0:
     for(int i=0;i<4;i++)
     for(int j=0;j<4;j++)
     if(mp[ni+i][nj+j]!=0&&nw.shape[i][j])
-    return 0;
+    t=0;
     break;
     case 3:
         if(ni-1<0)
-        return 0;
+        t=0;
+        for(int i=0;i<4;i++)
         for(int j=0;j<4;j++)
-        if(mp[ni-1][nj+j]!=0&&nw.shape[3][j])
-        return 0;
+        if(mp[ni+i-1][nj+j]!=0&&nw.shape[i][j])
+        t=0;
         break;
     case 4:
         if(nj-1<0)
-        return 0;
+        t=0;
         for(int i=0;i<4;i++)
-        if(mp[ni+i][nj-1]!=0&&nw.shape[i][0])
-        return 0;
+        for(int j=0;j<4;j++)
+        if(mp[ni+i][nj+j-1]!=0&&nw.shape[i][j])
+        t=0;
         break;
     case 5:
         if(nj+1>6)
-        return 0;
+        t=0;
         for(int i=0;i<4;i++)
-        if(mp[ni+i][nj+1]!=0&&nw.shape[i][3])
-        return 0;
+        for(int j=0;j<4;j++)
+        if(mp[ni+i][nj+j+1]!=0&&nw.shape[i][j])
+        t=0;
         break;
     default:
         break;
     }
-    return 1;
+    return t;
 }
 
 bool zone::premv(int dr)
@@ -357,22 +360,22 @@ bool zone::premv(int dr)
     for(int i=0;i<4;i++)
     if(nw.shape[i][0]!=0)
     return 0;
-    for(int i=0;i<4;i++)
-    nw.shape[i][3]=0;
     for(int i=0;i<3;i++)
     for(int j=0;j<4;j++)
     nw.shape[j][i]=shp[j][i+1];
+    for(int i=0;i<4;i++)
+    nw.shape[i][3]=0;
     return 1;
     break;
     case 5:
     for(int i=0;i<4;i++)
     if(nw.shape[i][3]!=0)
     return 0;
-    for(int i=0;i<4;i++)
-    nw.shape[i][0]=0;
     for(int i=0;i<3;i++)
     for(int j=0;j<4;j++)
     nw.shape[j][i+1]=shp[j][i];
+    for(int i=0;i<4;i++)
+    nw.shape[i][0]=0;
     return 1;
     break;
     default:
@@ -380,24 +383,31 @@ bool zone::premv(int dr)
    }
    return 0;
 }
-void zone::move(int t)
+bool zone::move(int t)
 {
+
 clearnw();
  if(t==1)
  {nw.turnl();
  if(!ismv(0))
   nw.turnr();
+  t=0;
  }
  if(t==2)
  nw.turnr();
- if(t==3&&(!premv(3)))
+ if(t==3)
  {
-  
+  if(premv(3))
+  {
+    drawnw();
+   return 1;
+  }
   if(ismv(3))
   { 
     
     ni--;
-   
+    drawnw();
+    return 1;
   }
  }
  if(t==4&&!premv(4))
@@ -418,11 +428,13 @@ clearnw();
     nj++;
   }
  }
- 
- drawnw();
+  drawnw();
+ return 0;
 }
 bool zone::nxt(){
     nw=nx;
+    ni=16;
+    nj=3;
     int shape=std::rand() % 7 + 1;
     int color=std::rand() % 4 + 1;
     nx.fresh(color,shape);
@@ -433,44 +445,28 @@ int zone::cnt(){
     int h=0;
     int mpc[20][10]={0};
     for(int i=0;i<20;i++)
+    {
+        if(full(i))
+        {h++;
+        for(int j=0;j<10;j++)
+        mp[i][j]=0;
+        }
+    }
+    for(int i=0;i<20;i++)
     for(int j=0;j<10;j++)
     mpc[i][j]=mp[i][j];
     for(int i=0;i<20;i++)
-    {
-        if(full(i))
-        {h++;
-        for(int j=0;j<10;j++)
-        mp[i][j]=0;
-        }
-        else
-        break;
-    }
-    for(int i=h+2;i<20;i++)
     for(int j=0;j<10;j++)
     {
         if(mpc[i][j]!=0)
-        for(int k=i;k>h+1;k--)
-        {
-            if(mpc[k][j]==0)
+        for(int k=0;k<i;k++)
+            if(mp[k][j]==0)
             {
-                mpc[k][j]=mpc[i][j];
-                mpc[i][j]=0;
-                break;
+             mp[k][j]=mpc[i][j];
+             mp[i][j]=0;
+             break;
             }
-        }
+        
     }
-     for(int i=h;i<20;i++)
-    {
-        if(full(i))
-        {h++;
-        for(int j=0;j<10;j++)
-        mp[i][j]=0;
-        }
-        else
-        break;
-    }
-    for(int i=h;i<20;i++)
-    for(int j=0;j<10;j++)
-    mp[i-h][j]=mpc[i][j];
     return 10*h*h;
 }

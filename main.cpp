@@ -14,6 +14,45 @@ SDL_Rect text;
 SDL_Texture* texture;
 SDL_Color txcl={255,255,255};
 zone z;
+void drawnx(){
+  int x=0,y=0;
+  SDL_Rect cub={x,y,28,28};
+  
+ for(int i=0;i<4;i++)
+ for(int j=0;j<4;j++)
+ {
+    cub.x=408+30*j;
+    cub.y=50+30*i;
+    if(z.nx.shape[i][j])
+    {
+      switch (z.nx.color)
+    {
+    case 0:
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    break;
+    case 1:
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    break;
+    case 2:
+    SDL_SetRenderDrawColor(renderer,0, 255, 0, 255);
+    break;
+    case 3:
+    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+    break;
+    case 4:
+    SDL_SetRenderDrawColor(renderer,255, 255, 0, 255);
+    break;
+    default: 
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    break;
+    }
+    }
+    else
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderFillRect(renderer, &cub);
+ }
+  SDL_RenderPresent(renderer);
+}
 void tx(const char* tx,int x,int y)
 {
 SDL_Surface* txsuf = TTF_RenderText_Solid(Font,tx, txcl);
@@ -35,11 +74,11 @@ void scbd()
       Font = TTF_OpenFont("C:Windows\\Fonts\\times.ttf", 20);  
  window = SDL_CreateWindow("SDL Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 600, 800, SDL_WINDOW_SHOWN);
  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
- tx("my ruscub",408,100);
- tx("q to quit",408,150);
+ tx("my ruscub",408,200);
+ tx("Next:",408,20);
+ tx("q to quit",408,250);
  tx("score:",408,300);
- tx("highest:",408,250);
- tx("wasd to controll",408,200);
+ tx("wasd to controll",408,350);
  SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
  for(int i=0;i<8;i++)
  SDL_RenderDrawLine(renderer, 390+i, 0, 390+i, 800);
@@ -86,38 +125,55 @@ void mdraw(int mp[][10])
 }
 void esc()
 {
-    TTF_CloseFont(Font);
+    
     TTF_Quit();
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-
+    SDL_Quit();
+    exit(0);
 }
 void chk()
 {
-for(int i=0;i<20;i++)
-    {
+  for(int i=0;i<4;i++)
+  {  
+    for(int j=0;j<4;j++)
+    cout<<z.nw.shape[i][j]<<" ";
     cout<<endl;
+  }
+  cout<<z.ni<<" "<<z.nj<<endl;
+  for(int i=0;i<20;i++)
+    {
     for(int j=0;j<10;j++)
-    cout<<z.mp[i][j]<<" ";}
+    cout<<z.mp[i][j]<<" ";
+    cout<<endl;}
     cin.get();
     cin.get();
 }
 void work()
 {
-    
+    int sc=0;
+    int ls=0;
+    drawnx();
+    string scs;
     bool qt=1;
-     SDL_Event press;
-     
+    SDL_Event press;
     auto s = std::chrono::high_resolution_clock::now();
     auto e = std::chrono::high_resolution_clock::now();
     chrono::duration<double> d = e -s;
     mdraw(z.mp);
     while(qt)
     {
+    if(ls!=sc)
+    {scs=to_string(sc);
+    SDL_Rect cub={480,300,28,28};
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    for(int i=0;i<5;i++)
+     SDL_RenderFillRect(renderer, &cub);
+     SDL_RenderPresent(renderer);
+    tx(scs.c_str(),480,300);
+    ls=sc;
+    }
      SDL_PollEvent(&press);
-     if(press.type==SDL_KEYDOWN&&((press.key.keysym.sym==SDLK_w)||(press.key.keysym.sym==SDLK_a)||(press.key.keysym.sym==SDLK_s)||(press.key.keysym.sym==SDLK_d)))
+     if(press.type==SDL_KEYDOWN&&((press.key.keysym.sym==SDLK_w)||(press.key.keysym.sym==SDLK_a)||(press.key.keysym.sym==SDLK_s)||(press.key.keysym.sym==SDLK_d)||(press.key.keysym.sym==SDLK_q)))
      {
-      cout<<"in"<<endl;
       SDL_Event up;
       auto s1 = std::chrono::high_resolution_clock::now();
       while(1)
@@ -145,6 +201,7 @@ void work()
          z.move(5);
          break;
          case SDLK_q:
+         qt=0;
          esc();
          break;
          default:
@@ -159,14 +216,33 @@ void work()
      }
      e=std::chrono::high_resolution_clock::now();
      d=e-s;
-     cout<<d.count()<<endl;
      if(d.count()>0.9)
-     {z.move(3);
+     { 
+     if(!z.move(3))
+     {
+     for(int i=0;i<20;i++)
+     if(z.full(i))
+     {
+     sc+=z.cnt();
+     mdraw(z.mp);
+     break;
+     }
+      if(z.nxt())
+     {
+     z.drawnw(); 
+     mdraw(z.mp);
+     drawnx();
+     cout<<"next"<<endl;
+     }
+     else
+     cout<<"fail"<<endl;
+     }
       s = std::chrono::high_resolution_clock::now();
      }
-     mdraw(z.mp);
-    }
+     mdraw(z.mp); 
+  }
 }
+
 //main函数中的参数不能省略，不然会报错
 int WinMain(int args, char *argv[])
 {  
